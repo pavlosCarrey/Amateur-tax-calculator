@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Amateur Tax Calculator</title>
+	<style>
+		label {
+			width: 200px;
+			display: inline-block;
+			text-align: right;
+		}
+		
+		button {
+			margin-left: 125px;
+			width: 141px;
+		}
+		
+		main {
+			width: 360px;
+			margin: 0 auto;
+			margin-top: 200px;
+		}
+	</style>
+	<script type="text/javascript" src="syntelestes.json"></script>
+	<script type="text/javascript">
+		function calculateTax() {
+			//input
+			var meiktoMina = document.getElementById("meiktoMina").value;
+			var eksodaMina = document.getElementById("eksodaMina").value;
+			var asfEpiv = document.getElementById("asfEpiv").value;
+			
+			//Έλεγχος ορθότητας στοιχείων
+			if(isNaN(meiktoMina))
+				alert("Το μεικτό εισόδημα το μήνα που εισάγατε δεν είναι αριθμός. Δοκιμάστε ξανά.");
+			if(isNaN(eksodaMina))
+				alert("Τα έξοδα το μήνα που εισάγατε δεν είναι αριθμός. Δοκιμάστε ξανά.");
+			if(isNaN(asfEpiv))
+				alert("Η ασφαλιστική επιβάρυνση που εισάγατε δεν είναι αριθμός. Δοκιμάστε ξανά.");
+			
+			//Υπολογισμός φορολογητέου ανα τμήμα
+			var forologiteoAnaMina = meiktoMina - eksodaMina;
+			var forologiteoAnaEtos = forologiteoAnaMina * 12;
+			var tmimaos20k = Math.min(20000, forologiteoAnaEtos);
+			var tmima20eos30k = Math.min(10000, Math.max(0, forologiteoAnaEtos-20000));
+			var tmima30eos40k = Math.min(10000, Math.max(0, forologiteoAnaEtos-30000));
+			var tmimaGreater40k = Math.max(0, forologiteoAnaEtos-40000);
+			
+			//Υπολογισμός ασφάλισης και φόρων ανα τμήμα
+			var foroiAsfAnaTmima = {};
+			foroiAsfAnaTmima.eos20 = {
+				asfaleia: Math.min(20000, forologiteoAnaEtos) * asfEpiv/100,
+				get foros() { return (tmimaos20k - this.asfaleia) * (syntelestes.eos20.forosEisodimatos + syntelestes.eos20.allilegyis) / 100; },				
+				get prokatavoli() { return (tmimaos20k - this.asfaleia) * syntelestes.eos20.forosEisodimatos / 100; }
+			};
+			
+			foroiAsfAnaTmima.eos30 = {
+				asfaleia : Math.min(10000, Math.max(0, forologiteoAnaEtos-20000)) * asfEpiv / 100,
+				get foros() { return (tmima20eos30k - this.asfaleia) * (syntelestes.eos30.forosEisodimatos + syntelestes.eos30.allilegyis) / 100; },
+				get prokatavoli() { return (tmima20eos30k - this.asfaleia) * syntelestes.eos30.forosEisodimatos / 100; }
+			};
+			
+			foroiAsfAnaTmima.eos40 = {
+				asfaleia : Math.min(10000, Math.max(0, forologiteoAnaEtos-30000)) * asfEpiv / 100,
+				get foros() { return (tmima30eos40k - this.asfaleia) * (syntelestes.eos40.forosEisodimatos + syntelestes.eos40.allilegyis) / 100; },
+				get prokatavoli() { return (tmima30eos40k - this.asfaleia) * syntelestes.eos40.forosEisodimatos / 100; }
+			};
+			
+			foroiAsfAnaTmima.greater40 = {
+				asfaleia : Math.max(0, forologiteoAnaEtos - 40000) * asfEpiv / 100,
+				get foros() { return (tmimaGreater40k - this.asfaleia) * (syntelestes.greater40.forosEisodimatos + syntelestes.greater40.allilegyis) / 100; },
+				get prokatavoli() { return (tmimaGreater40k - this.asfaleia) * syntelestes.greater40.forosEisodimatos / 100; }
+			}
+			
+			//Υπολογισμός τελικών Συνόλων
+			var genikoSynoloXorProk = foroiAsfAnaTmima.eos20.asfaleia + foroiAsfAnaTmima.eos20.foros + 
+										foroiAsfAnaTmima.eos30.asfaleia + foroiAsfAnaTmima.eos30.foros +
+										foroiAsfAnaTmima.eos40.asfaleia + foroiAsfAnaTmima.eos40.foros +
+										foroiAsfAnaTmima.greater40.asfaleia + foroiAsfAnaTmima.greater40.foros;
+										
+			var genikoSynoloMeProk = foroiAsfAnaTmima.eos20.asfaleia + foroiAsfAnaTmima.eos20.foros + foroiAsfAnaTmima.eos20.prokatavoli +
+										foroiAsfAnaTmima.eos30.asfaleia + foroiAsfAnaTmima.eos30.foros + foroiAsfAnaTmima.eos30.prokatavoli +
+										foroiAsfAnaTmima.eos40.asfaleia + foroiAsfAnaTmima.eos40.foros + foroiAsfAnaTmima.eos40.prokatavoli +
+										foroiAsfAnaTmima.greater40.asfaleia + foroiAsfAnaTmima.greater40.foros + foroiAsfAnaTmima.greater40.prokatavoli;
+			
+			var synoloMO = (genikoSynoloXorProk + genikoSynoloMeProk) / 2;
+			
+			//Υπολογισμός τελικής φορολογίας
+			var etisioKatharoMO = (forologiteoAnaEtos - synoloMO).toFixed(2);
+			var pragmatikosForosMO = (100 - ((etisioKatharoMO * 100) / forologiteoAnaEtos)).toFixed(2);
+			var etisioKatharoXorProk = (forologiteoAnaEtos - genikoSynoloXorProk).toFixed(2);
+			var pragmatikosForosXorProk = (100 - ((etisioKatharoXorProk * 100) / forologiteoAnaEtos)).toFixed(2);
+			var etisioKatharoMeProk = (forologiteoAnaEtos - genikoSynoloMeProk).toFixed(2);
+			var pragmatikosForosMeProk = (100 - ((etisioKatharoMeProk * 100) / forologiteoAnaEtos)).toFixed(2);
+			
+			//Εκτύπωση output
+			document.getElementById("etisioKatharoMO").innerHTML = etisioKatharoMO;
+			document.getElementById("pragmatikosForosMO").innerHTML = pragmatikosForosMO + "%";
+			document.getElementById("etisioKatharoXorProk").innerHTML = etisioKatharoXorProk;
+			document.getElementById("pragmatikosForosXorProk").innerHTML = pragmatikosForosXorProk + "%"; 
+			document.getElementById("etisioKatharoMeProk").innerHTML = etisioKatharoMeProk;
+			document.getElementById("pragmatikosForosMeProk").innerHTML = pragmatikosForosMeProk + "%";
+		}
+	</script>
+</head>
+<body>
+	<main>
+		<h2 style="text-align:center">Amateur Tax Calculator</h2>
+		<section>
+			<label for="meiktoMina">Μεικτό εισόδημα/Μήνα: </label>
+			<input type="text" id="meiktoMina" name="meiktoMina"/><br><br>
+			<label for="eksodaMina">Έξοδα/Μήνα: </label>
+			<input type="text" id="eksodaMina" name="eksodaMina"/><br><br>
+			<label for="asfEpiv">Ασφαλιστική Επιβάρυνση: </label>
+			<input type="text" id="asfEpiv" name="asfEpiv"/><br><br>
+			<button onclick="calculateTax()">Υπολογισμός Φόρου</button><br><br>
+		</section>
+		<table border="1">
+			<tr>
+				<th></th>
+				<th>Ετήσιο Καθαρό</th>
+				<th>Πραγματικός Φόρος</th>
+			</tr>
+			<tr>
+				<td>ΜΟ</td>
+				<td id="etisioKatharoMO"></td>
+				<td id="pragmatikosForosMO"></td>
+			</tr>
+			<tr>
+				<td>Χωρίς Προκαταβολή</td>
+				<td id="etisioKatharoXorProk"></td>
+				<td id="pragmatikosForosXorProk"></td>
+			</tr>
+			<tr>
+				<td>Με Προκαταβολή</td>
+				<td id="etisioKatharoMeProk"></td>
+				<td id="pragmatikosForosMeProk"></td>
+			</tr>
+		</table>
+	</main>
+</body>
+</html>
