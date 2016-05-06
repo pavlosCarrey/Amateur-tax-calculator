@@ -1,0 +1,22 @@
+syntelestes = {
+	"eos20" : {
+		"forosEisodimatos" : 22,
+		"allilegyis" : 2.20
+	},
+	
+	"eos30" : {
+		"forosEisodimatos" : 29,
+		"allilegyis" : 5
+	},
+	
+	"eos40" : {
+		"forosEisodimatos" : 37,
+		"allilegyis" : 6.5
+	},
+	
+	"greater40" : {
+		"forosEisodimatos" : 45,
+		"allilegyis" : 7.5
+	}
+	
+}
